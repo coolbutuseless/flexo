@@ -1,0 +1,7 @@
+^codecov\.yml$
+^\.travis\.yml$
+^appveyor\.yml$
+^.*\.Rproj$
+^\.Rproj\.user$
+README.Rmd
+^\.github$

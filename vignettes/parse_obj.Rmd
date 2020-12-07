@@ -1,0 +1,151 @@
+---
+title: "Parsing 3d objects in OBJ format"
+author: "mikefc"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Parsing 3d objects in OBJ format}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r setup, include=FALSE}
+suppressPackageStartupMessages({
+  library(flexo)
+})
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+
+
+Example parser: `obj` format for 3d objects
+------------------------------------------------------------------------------
+
+A simple text file to store 3d objects is the Wavefront **obj** format.  The filetype
+is well documented on the internet (e.g. 
+[1](https://en.wikipedia.org/wiki/Wavefront_.obj_file), 
+[2](http://paulbourke.net/dataformats/obj/), 
+[3](https://www.cs.cmu.edu/~mbz/personal/graphics/obj.html)), and an example octahedron object
+is show below which has 6 vertices and 8 faces.
+
+```{r}
+octahedron_obj <- '
+# OBJ file created by ply_to_obj.c
+#
+g Object001
+
+v  1  0  0
+v  0  -1  0
+v  -1  0  0
+v  0  1  0
+v  0  0  1
+v  0  0  -1
+
+f  2  1  5
+f  3  2  5
+f  4  3  5
+f  1  4  5
+f  1  2  6
+f  2  3  6
+f  3  4  6
+f  4  1  6
+'
+```
+
+
+The basic structure of a `.obj` file is:
+
+* Comments start with `#` and continue to the end of the line
+* There are symbols at the start of each line telling us what the data on the rest of the line represents, e.g.
+    * `v` means this line defines a vertex and will be followed by 3 numbers representing the x, y, z coordinates.
+    * `f` means this line defines a triangular face and the following 3 numbers indicate the 3 vertices which make up this face
+    * `vn` means this line defines a vector for the direction of the normal at a vertex
+* The format is more complicated than this, and I'm leaving out a lot of details, but this is enough to get the general idea.
+
+
+
+
+Use `lex()` to turn the text into tokens
+------------------------------------------------------------------------------
+
+1. Start by defining the regular expression patterns for each element in the *obj* file.
+2. Use `flexo::lex()` to turn the *obj* text into tokens
+3. Throw away whitespace, newlines and comments, since I'm not interested in them.
+
+```{r}
+obj_regexes <- c(
+  comment    = '(#.*?)\n',  # assume comments take up the whole line
+  number     = flexo::regex$number, # matches most numeric values
+  symbol     = '\\w+',
+  newline    = '\n',
+  whitespace = '\\s+'
+)
+```
+
+
+Tokenising the `obj`
+------------------------------------------------------------------------------
+
+Split the `obj` text data into tokens, but then remove anything that we don't need 
+to create the actual data structure representing the 3d object.
+
+```{r}
+tokens <- lex(octahedron_obj, obj_regexes)
+tokens <- tokens[!(names(tokens) %in% c('whitespace', 'newline', 'comment'))]
+tokens
+```
+
+
+
+
+Use `TokenStream` to help turn the tokens into coherent data.frame
+------------------------------------------------------------------------------
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Initialise a TokenStream object so I can manipulate the stream of tokens
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+stream <- TokenStream$new(tokens)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Fast-forward over everything until we get to the first vertex
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+jnk <- stream$consume_until(value = 'v', inclusive = FALSE)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# A place to store the intermediate data for vertices and faces
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+vlist <- list()
+flist <- list()
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Extract the numeric data for each vertex and face until stream is out of data
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+while (!stream$end_of_stream()) {
+  type   <- stream$consume(1)
+  values <- stream$consume_while(name = 'number')
+  
+  if (type == 'v') {
+    vlist <- append(vlist, list(as.numeric(values)))
+  } else {
+    flist <- append(flist, list(as.numeric(values)))
+  }
+  
+}
+ 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Combine intermediate data into matrices
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+verts <- do.call(rbind, vlist)
+faces <- do.call(rbind, flist)
+
+verts
+faces
+```
+

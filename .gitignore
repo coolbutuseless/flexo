@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+.DS_Store
+*.Rproj
+*.swp
+README.html
+inst/doc
+pkgdown
