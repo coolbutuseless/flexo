@@ -57,12 +57,15 @@ remotes::install_github('coolbutuseless/flexo', ref='main')
 
 ## Vignettes
 
+Vignettes are available to read
+[online](https://coolbutuseless.github.io/package/flexo)
+
 -   [Parsing Chess games in PGN
-    format](https://coolbutuseless.github.io/packages/chess.html)
+    format](https://coolbutuseless.github.io/package/flexo/articles/chess.html)
 -   [Parsing 3d models in OBJ
-    format](https://coolbutuseless.github.io/packages/articles/parse_obj.html)
+    format](https://coolbutuseless.github.io/package/flexo/articles/parse_obj.html)
 -   [Parsing Scrabble games in GCG
-    format](https://coolbutuseless.github.io/packages/Scrabble.html)
+    format](https://coolbutuseless.github.io/package/flexo/articles/Scrabble.html)
 
 ## Example: Using `lex()` to split sentence into tokens
 
