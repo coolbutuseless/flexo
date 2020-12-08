@@ -203,9 +203,9 @@ Next steps - more parser functions!
 ------------------------------------------------------------------------------
 
 Next step would be to call specialist functions for parsing particular 
-types of blocks.
+block types.
 
-`parse_identifier()` should recogniser the identifer and then call a specialise
+`parse_identifier()` should recognise the identifer and then call a specialist
 parsing function for it. i.e.
 
 * `parse_shape()`
@@ -214,7 +214,7 @@ parsing function for it. i.e.
 * etc
 
 
-There could also be some low-level parse functions which convert some 
+There could also be some low-level parse functions which parse some 
 common generic structures:
 
 * `parse_number()` converts the token (a character) into a numeric value
