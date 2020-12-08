@@ -57,8 +57,6 @@ lex <- function(text, regexes, verbose=FALSE) {
   stopifnot(!anyNA(regex_labels))
   stopifnot(!any(regex_labels == ''))
 
-
-
   #---------------------------------------------------------------------------
   # Combine all the patterns into a single regex
   #---------------------------------------------------------------------------

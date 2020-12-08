@@ -140,7 +140,7 @@ TokenStream <- R6::R6Class(
     #' @param valid_values Valid values
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     check_value = function(valid_values) {
-      actual_value <- self$read_names(1)
+      actual_value <- self$read_values(1)
       actual_value %in% valid_values
     },
 
@@ -360,7 +360,7 @@ TokenStream <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     print = function(n = 5) {
       cat("Position ", self$position, "/", length(self$named_values), ".  ",
-          "Next ", n, "elements:\n", sep = "")
+          "Next ", n, " elements:\n", sep = "")
       print(self$named_values[self$position + seq(n) - 1L])
     }
 

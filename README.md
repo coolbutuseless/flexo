@@ -66,6 +66,8 @@ Vignettes are available to read
     format](https://coolbutuseless.github.io/package/flexo/articles/parse_obj.html)
 -   [Parsing Scrabble games in GCG
     format](https://coolbutuseless.github.io/package/flexo/articles/Scrabble.html)
+-   [Parsing PBRT scene description
+    format](https://coolbutuseless.github.io/package/flexo/articles/PBRT.html)
 
 ## Example: Using `lex()` to split sentence into tokens
 

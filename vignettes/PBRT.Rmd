@@ -1,0 +1,228 @@
+---
+title: "Parsing PBRT rendering scene format"
+author: "mikefc"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Parsing PBRT rendering scene format}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+suppressPackageStartupMessages({
+  library(flexo)
+})
+knitr::opts_chunk$set(
+  collapse = FALSE,
+  comment = "#>"
+)
+```
+
+
+PBRT format
+------------------------------------------------------------------------------
+
+The [PBRT Scene Format](https://pbrt.org/fileformat-v3.html) is a scene
+description format associated with the book ["Physically Based Rendering"](https://pbrt.org/index.html)
+by Pharr et al.
+
+This vignette outlines the beginning of the parsing process, and starts to 
+define parser functions for the main elements in the format.
+
+
+
+Example Scene
+------------------------------------------------------------------------------
+
+```{r}
+pbrt_text <- '
+LookAt 3 4 1.5  # eye
+       .5 .5 0  # look at point
+       0 0 1    # up vector
+Camera "perspective" "float fov" 45
+
+Sampler "halton" "integer pixelsamples" 128
+Integrator "path"
+Film "image" "string filename" "simple.png"
+     "integer xresolution" [400] "integer yresolution" [400]
+
+WorldBegin
+
+# uniform blue-ish illumination from all directions
+LightSource "infinite" "rgb L" [.4 .45 .5]
+
+# approximate the sun
+LightSource "distant"  "point from" [ -30 40  100 ]
+   "blackbody L" [3000 1.5]
+
+AttributeBegin
+  Material "glass"
+  Shape "sphere" "float radius" 1
+AttributeEnd
+
+AttributeBegin
+  Texture "checks" "spectrum" "checkerboard"
+          "float uscale" [8] "float vscale" [8]
+          "rgb tex1" [.1 .1 .1] "rgb tex2" [.8 .8 .8]
+  Material "matte" "texture Kd" "checks"
+  Translate 0 0 -1
+  Shape "trianglemesh"
+      "integer indices" [0 1 2 0 2 3]
+      "point P" [ -20 -20 0   20 -20 0   20 20 0   -20 20 0 ]
+      "float st" [ 0 0   1 0    1 1   0 1 ]
+AttributeEnd
+
+WorldEnd
+'
+```
+
+When using a renderer which supports the PBRT scene format, the above example
+should render to the following image:
+
+![](images/pbrt-ref.png)
+
+
+Lex the text into tokens
+------------------------------------------------------------------------------
+
+```{r}
+pbrt_regexes <- c(
+  comment       = '(#.*?)\n',       # Assume # only appears to denote comment to end of line
+  number        = '[+\\-]?\\.?(?:0|[1-9]\\d*)(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?',
+  string        = '"(.*?)"',
+  list_start    = "\\[",
+  list_end      = "\\]",
+  identifier    = "\\w+",
+  newline       = '\n',
+  whitespace    = '\\s+'
+)
+
+tokens <- flexo::lex(pbrt_text, pbrt_regexes)
+tokens <- tokens[!(names(tokens) %in% c('whitespace', 'newline', 'comment'))]
+
+tokens[1:20]
+```
+
+Define some parsers for particular sequences in the stream
+------------------------------------------------------------------------------
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Parse an identifier 
+#
+# Parse the stream for the current location until just before the next
+# identifier
+#
+# @param stream stream positioned such the the first token is an 'identifier'
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+parse_identifier <- function(stream) {
+  stream$assert_name('identifier')
+  identifier <- stream$consume(1)
+  body       <- stream$consume_until(name = 'identifier', inclusive = FALSE)
+  setNames(list(list(body)), identifier)
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Parse an Attribute 
+#
+# Parse the stream for the current location until just after the next
+# 'AttributeEnd'
+#
+# @param stream stream positioned such the the first token has the value
+#        'AttributeBein'
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+parse_attribute <- function(stream) {
+  stream$assert_value('AttributeBegin')
+  stream$consume(1)
+  attr <- list()
+  while (!stream$end_of_stream() && stream$read(1) != 'AttributeEnd') {
+    identifier <- parse_identifier(stream)
+    attr       <- append(attr, identifier)
+  }
+  stream$consume(1) # AttributeEnd
+  attr
+}
+```
+
+
+Parse the tokens in the 'setup' block
+------------------------------------------------------------------------------
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Create a stream from the tokens in order to manipulate them.
+# Allocate a place for the setup and world informatino 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+stream <- flexo::TokenStream$new(tokens)
+setup  <- list()
+world  <- list()
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# The first token should always be an identifier
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+stream$assert_name('identifier')
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Parse all the setup identifiers up to (but not including) WorldBegin
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+while (!stream$end_of_stream() && stream$read(1) != 'WorldBegin') {
+  identifier <- parse_identifier(stream)
+  setup      <- append(setup, identifier)
+}
+
+setup
+```
+
+Parse the tokens in the 'World' block
+------------------------------------------------------------------------------
+
+```{r}
+jnk <- stream$consume(1) # WorldBegin
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Parse all the world entries
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+while (!stream$end_of_stream() && stream$read(1) != 'WorldEnd') {
+  if (stream$read(1) == 'AttributeBegin') {
+    attribute <- parse_attribute(stream)
+    world     <- append(world, attribute)
+  } else {
+    identifier <- parse_identifier(stream)
+    world      <- append(world, identifier)
+  }
+}
+
+world
+
+```
+
+
+Next steps - more parser functions!
+------------------------------------------------------------------------------
+
+Next step would be to call specialist functions for parsing particular 
+types of blocks.
+
+`parse_identifier()` should recogniser the identifer and then call a specialise
+parsing function for it. i.e.
+
+* `parse_shape()`
+* `parse_translate()`
+* `parse_material()`
+* etc
+
+
+There could also be some low-level parse functions which convert some 
+common generic structures:
+
+* `parse_number()` converts the token (a character) into a numeric value
+* `parse_list()` converts a list defined in PBRT format as `[e1 e2 e3 ... en]`
+  into a standard R list object.
+
+
+
+
+
+

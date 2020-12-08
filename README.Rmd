@@ -109,6 +109,7 @@ Vignettes are available to read [online](https://coolbutuseless.github.io/packag
 * [Parsing Chess games in PGN format](https://coolbutuseless.github.io/package/flexo/articles/chess.html)
 * [Parsing 3d models in OBJ format](https://coolbutuseless.github.io/package/flexo/articles/parse_obj.html)
 * [Parsing Scrabble games in GCG format](https://coolbutuseless.github.io/package/flexo/articles/Scrabble.html)
+* [Parsing PBRT scene description format](https://coolbutuseless.github.io/package/flexo/articles/PBRT.html)
 
 
 
