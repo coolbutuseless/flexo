@@ -1,13 +1,11 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# flexo: Simple Lex/Parse Tools in R <img src="man/figures/logo.png" align="right" height=300 title="An homage to the old logo for the Berlin Hilton"/>
+# flexo: Simple Lex/Parse Tools in R <img src="man/figures/logo.png" align="right" height=300 />
 
 <!-- badges: start -->
 
-![](https://img.shields.io/badge/cool-useless-green.svg) [![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
-[![R build
+![](https://img.shields.io/badge/cool-useless-green.svg) [![R build
 status](https://github.com/coolbutuseless/flexo/workflows/R-CMD-check/badge.svg)](https://github.com/coolbutuseless/flexo/actions)
 <!-- badges: end -->
 
@@ -147,7 +145,7 @@ game_regexes <- c(
   whitespace  = "\\s+",
   sep         = "\\|",
   mark        = "X|O",
-  order       = flexo::regex$number
+  order       = flexo::re$number
 )
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

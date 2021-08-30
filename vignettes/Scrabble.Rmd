@@ -77,7 +77,7 @@ gcg_regexes <- c(
   whitespace    = '\\s+',
   player        = '>(.*?):',                  # start of each line with a `>`
   location      = '[a-o]\\d+|\\d+[a-o]|--|-', # Number first for horizontal words. -/-- for specials
-  number        = flexo::regex$number,
+  number        = flexo::re$number,
   symbol        = '[-+\\w\\./\\?\\(?:\\)]+',
   comma         = ","
 )

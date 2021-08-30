@@ -29,6 +29,6 @@ a named character vector with the names representing the token type
 Break a string into labelled tokens based upon a set of patterns
 }
 \examples{
-lex("hello there 123.45", regexes=c(number=regex$number, word="(\\\\w+)", whitespace="(\\\\s+)"))
+lex("hello there 123.45", regexes=c(number=re$number, word="(\\\\w+)", whitespace="(\\\\s+)"))
 
 }

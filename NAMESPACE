@@ -2,6 +2,6 @@
 
 export(TokenStream)
 export(lex)
-export(regex)
+export(re)
 import(R6)
-import(stringr)
+import(stringi)

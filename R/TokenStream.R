@@ -320,11 +320,11 @@ TokenStream <- R6::R6Class(
 
       if (!inclusive) {
         idx <- idx - 1L
-        if (length(idx) > 0 && idx == 0) return(character(0))
+        if (length(idx) > 0 && !is.na(idx) && idx == self$position - 1L) return(character(0))
       }
 
       if (length(idx) == 0L || is.na(idx)) {
-        message("End not found. Returning all")
+        # message("End not found. Returning all")
         n <- length(self$named_values) - self$position + 1L
       } else {
         n <- idx - self$position + 1L
@@ -359,9 +359,19 @@ TokenStream <- R6::R6Class(
     #' @param n number of elements to print
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     print = function(n = 5) {
-      cat("Position ", self$position, "/", length(self$named_values), ".  ",
-          "Next ", n, " elements:\n", sep = "")
-      print(self$named_values[self$position + seq(n) - 1L])
+      if (self$end_of_stream()) {
+        print("End of stream")
+      } else {
+        cat("Position ", self$position, "/", length(self$named_values), ".\n", sep = "")
+
+        n2 <- length(self$named_values) - self$position + 1L
+        n  <- min(n2, n)
+
+        if (n > 0) {
+          cat("Next", n, "elements:\n")
+          print(self$named_values[self$position + seq(n) - 1L])
+        }
+      }
     }
 
   )
@@ -375,16 +385,12 @@ if (FALSE) {
 
   stream <- TokenStream$new(named_values)
 
-  stream$consume(2)
-  stream$position
+  stream$consume_until(name = 'one', inclusive = FALSE)
+  stream
 
-  stream$consume_until(value = 4)
 
-  stream$reset()
-  stream$position
-
-  stream$consume_while(value = 1:4)
-  stream$position
+  stream$consume_until(name = 'two', inclusive = FALSE)
+  stream
 }
 
 

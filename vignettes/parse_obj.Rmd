@@ -80,7 +80,7 @@ Use `lex()` to turn the text into tokens
 ```{r}
 obj_regexes <- c(
   comment    = '(#.*?)\n',  # assume comments take up the whole line
-  number     = flexo::regex$number, # matches most numeric values
+  number     = flexo::re$number, # matches most numeric values
   symbol     = '\\w+',
   newline    = '\n',
   whitespace = '\\s+'
