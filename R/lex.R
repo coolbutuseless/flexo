@@ -1,6 +1,5 @@
 
 
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Break a string into labelled tokens based upon a set of patterns
 #'
@@ -88,11 +87,13 @@ lex <- function(text, regexes, verbose=FALSE) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # if 'regex_idx' is a list, then a location was matched by multiple regexes
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (is.list(regex_idx)) {
+  if (is.list(regex_idx)) { ## nocov start
+    # 99.9% sure this error can't happen any more.
+    # I can't even figure out how to trigger this error with pathological inputs
     lens <- lengths(regex_idx)
     idx  <- which(lens > 1)
     stop("lex issues at the following locations within 'text': ", deparse(idx))
-  }
+  } ## nocov end
 
 
   names(tokens)  <- regex_labels[regex_idx]

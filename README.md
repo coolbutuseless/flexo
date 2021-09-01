@@ -5,7 +5,9 @@
 
 <!-- badges: start -->
 
-![](https://img.shields.io/badge/cool-useless-green.svg) [![R build
+![](https://img.shields.io/badge/cool-useless-green.svg)
+![](https://img.shields.io/badge/test%20coverage-100%25-blue.svg) [![R
+build
 status](https://github.com/coolbutuseless/flexo/workflows/R-CMD-check/badge.svg)](https://github.com/coolbutuseless/flexo/actions)
 <!-- badges: end -->
 
@@ -15,21 +17,14 @@ files.
 `flexo` aims to be useful in getting otherwise unsupported text data
 formats into R.
 
-For complicated parsing (e.g. programming languages) you’ll want to use
-the more formally correct lexing/parsing provided by the [`rly`
-package](https://cran.r-project.org/package=rly) or the [`dparser`
-package](https://cran.r-project.org/package=dparser).
-
-`flexo` is a replacement for
-[minilexer](https://github.com/coolbutuseless/minilexer) (which should
-now be considered abandoned).
-
 ## What’s in the box
 
 -   `lex(text, regexes)` break a text string into tokens using the
     supplied regular expressions
 -   `TokenStream` is an R6 class for manipulating a stream of tokens - a
     first step for parsing the data into a more useful format
+-   `create_stream()` is a base R version of `TokenStream` which uses
+    environments directly
 
 ## Installation
 
@@ -52,6 +47,19 @@ remotes::install_github('coolbutuseless/flexo', ref='main')
 -   Optionally use the `TokenStream`
     [R6](https://cran.r-project.org/package=R6) class to aid in the
     manipulation of the raw tokens into more structured data.
+-   New in v0.2.5 use a base R environment-based token stream iniated
+    with `create_stream(tokens)`
+
+I often do not import the `flexo` package for projects, but instead copy
+the `lex.R` and `stream.R` files into the new package. This avoids
+having a non-CRAN dependency on an otherwise simple project.
+
+## Limitations
+
+For complicated parsing (e.g. programming languages) you’ll want to use
+the more formally correct lexing/parsing provided by the [`rly`
+package](https://cran.r-project.org/package=rly) or the [`dparser`
+package](https://cran.r-project.org/package=dparser).
 
 ## Vignettes
 

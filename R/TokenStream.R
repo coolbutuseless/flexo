@@ -23,6 +23,13 @@ TokenStream <- R6::R6Class(
     #' @param named_values named vector of values
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     initialize = function(named_values) {
+
+      nn <- names(named_values)
+      if (is.null(nn) || anyNA(nn) || any(nn == '')) {
+        stop("All tokens must be named")
+      }
+
+
       self$named_values <- named_values
       self$reset()
       invisible(self)
@@ -120,7 +127,7 @@ TokenStream <- R6::R6Class(
     #' @param value_seq Expected sequence of values
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     check_value_seq = function(value_seq) {
-      actual_values <- self$read_names(length(value_seq))
+      actual_values <- self$read_values(length(value_seq))
       res <- all.equal(actual_values, value_seq)
       isTRUE(res)
     },
@@ -358,7 +365,7 @@ TokenStream <- R6::R6Class(
     #'
     #' @param n number of elements to print
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    print = function(n = 5) {
+    print = function(n = 5) { # nocov start
       if (self$end_of_stream()) {
         print("End of stream")
       } else {
@@ -372,7 +379,7 @@ TokenStream <- R6::R6Class(
           print(self$named_values[self$position + seq(n) - 1L])
         }
       }
-    }
+    } # nocov end
 
   )
 )

@@ -1,10 +1,18 @@
 NEWS
 ============
 
+v0.2.5 2021-09-01
+------------------
+
+* Increase test coverage to 1005 of the code
+* Include a base R variation of the R6 TokenStream by using environments
+  directly.
+
+
 v0.2.4 2021-08-30
 ------------------
 
-Switch to `stringi` instead of `stringr`
+* Switch to `stringi` instead of `stringr` as it is a lighter dependency
 
 v0.2.3 2020-12-12
 ------------------

@@ -16,3 +16,18 @@ test_that("lex() works", {
   expect_equal(unname(res), c('Hello',         ' ',  'there',     ',',          ' ', 'Rstats',        '.'))
 
 })
+
+
+test_that("verbose warnings", {
+  regexes <- c(
+    test = 'p'
+  )
+
+  capture_output(
+    expect_warning(
+      lex("pppx", regexes, verbose = TRUE),
+      "not captured"
+    )
+  )
+
+})
