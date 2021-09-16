@@ -4,7 +4,7 @@
 \alias{lex}
 \title{Break a string into labelled tokens based upon a set of patterns}
 \usage{
-lex(text, regexes, verbose = FALSE)
+lex(text, regexes, verbose = FALSE, ...)
 }
 \arguments{
 \item{text}{a single character string}
@@ -19,6 +19,9 @@ will be processed in order such that an early match takes
  precedence over any later match.}
 
 \item{verbose}{print more information about the matching process. default: FALSE}
+
+\item{...}{further arguments passed to \code{stringi::stri_match_all()}.
+e.g. \code{multiline = TRUE}}
 }
 \value{
 a named character vector with the names representing the token type

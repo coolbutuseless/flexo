@@ -13,6 +13,8 @@
 #'                will be processed in order such that an early match takes
 #'                 precedence over any later match.
 #' @param verbose print more information about the matching process. default: FALSE
+#' @param ... further arguments passed to \code{stringi::stri_match_all()}.
+#'        e.g. \code{multiline = TRUE}
 #'
 #' @return a named character vector with the names representing the token type
 #'         with the value being the element extracted by the corresponding
@@ -24,7 +26,7 @@
 #' @import stringi
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-lex <- function(text, regexes, verbose=FALSE) {
+lex <- function(text, regexes, verbose=FALSE, ...) {
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # disallow multiple capture groups in a single pattern.
@@ -71,7 +73,7 @@ lex <- function(text, regexes, verbose=FALSE) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Match all regex against the text
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  token_matching  <- stringi::stri_match_all(text, regex = regex)[[1]]
+  token_matching  <- stringi::stri_match_all(text, ..., regex = regex)[[1]]
 
   if (verbose) {
     colnames(token_matching) <- c("all", regex_labels)

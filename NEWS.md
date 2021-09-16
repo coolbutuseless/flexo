@@ -1,6 +1,11 @@
 NEWS
 ============
 
+v0.2.6 2021-09-16
+------------------
+
+* Add `...` args to `lex()` which are passed through to `stringi::stri_match_all()`
+
 v0.2.5 2021-09-01
 ------------------
 

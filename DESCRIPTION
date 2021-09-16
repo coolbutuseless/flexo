@@ -1,7 +1,7 @@
 Package: flexo
 Type: Package
 Title: Simple Tools for Lexing/Parsing Text Data
-Version: 0.2.5
+Version: 0.2.6
 Author: mikefc
 Maintainer: mikefc <mikefc@coolbutuseless.com>
 Description: Simple tools for lexing/parsing text data.
