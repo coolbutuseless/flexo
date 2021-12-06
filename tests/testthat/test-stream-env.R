@@ -88,8 +88,39 @@ test_that("env stream works", {
     0
   )
 
+  stream <- create_stream(c(a=1, b=2, c = 3))
+  expect_length(
+    stream$consume_until(name = 'a', inclusive = FALSE),
+    0
+  )
+
+  stream <- create_stream(c(a=1, b=2, c = 3))
+  expect_length(
+    stream$consume_until(name = 'a', inclusive = TRUE),
+    1
+  )
 
 
 
+  stream <- create_stream(c(a=1, b=2, c = 3))
+  expect_length(
+    stream$read_while(name = 'a'),
+    1
+  )
+
+  stream <- create_stream(c(a=1, b=2, c = 3))
+  expect_length(
+    stream$read_while(name = 'b'),
+    0
+  )
+})
+
+
+
+test_that("more env stream tests", {
 
 })
+
+
+
+

@@ -1,0 +1,141 @@
+---
+title: "Parsing subtitles in srt format"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Parsing subtitles in srt format}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = FALSE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(flexo)
+```
+
+## Parsing subtitles in srt format
+
+The [srt](https://www.speechpad.com/captions/srt) subtitle format is a 
+simple representation of subtitles for video which consists of timestamped
+lines of text.
+
+
+# SRT format example
+
+The first 10 lines of dialogue from "It's a Wonderful Life" in `srt` format
+
+```{r}
+srt <- "
+1
+00:01:25,210 --> 00:01:28,004
+I owe everything to George Bailey.
+
+2
+00:01:28,422 --> 00:01:30,298
+Help him, dear Father.
+
+3
+00:01:30,674 --> 00:01:33,718
+Joseph, Jesus and Mary,
+
+4
+00:01:33,802 --> 00:01:36,429
+help my friend Mr. Bailey.
+
+5
+00:01:36,889 --> 00:01:39,515
+Help my son George tonight.
+
+6
+00:01:40,350 --> 00:01:42,226
+He never thinks about himself, God.
+
+7
+00:01:42,311 --> 00:01:44,061
+That's why he's in trouble.
+
+8
+00:01:44,146 --> 00:01:45,313
+George is a good guy.
+
+9
+00:01:46,482 --> 00:01:47,732
+Give him a break, God.
+
+10
+00:01:47,816 --> 00:01:49,942
+I love him, dear Lord.
+"
+```
+
+
+
+
+# Lex the srt file into tokens
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Define the regex for each token
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+srt_regexes <- c(
+  time  = "\\d+:\\d+:\\d+,\\d+",
+  link  = "\\s*-->\\s*",
+  index = "^\\d+$",
+  text  = "^.+?$"
+)
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Collapse the file into a single string
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+srt <- paste(enc2utf8(srt), collapse = "\n")
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Split the file by regex, and drop the 'link' between times
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tokens <- lex(srt, multiline = TRUE, srt_regexes)
+tokens <- tokens[names(tokens) != 'link']
+
+tokens
+```
+
+
+# Parse raw tokens into a data.frame
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Merge together runs of text
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rl    <- unclass(rle(names(tokens)))
+end   <- cumsum(rl$lengths)[rl$values == 'text']
+len   <- rl$lengths[rl$values == 'text']
+start <- end - len + 1
+
+text <- mapply(function(start, end) {
+  paste(tokens[start:end], collapse = "\n")
+}, start, end)
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Extract index and time vectors
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+indices <- as.integer(tokens[names(tokens) == 'index'])
+times   <- tokens[names(tokens) == 'time']
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Munge into data.frame
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+data.frame(
+  index  = indices,
+  start  = times[c(T, F)],
+  end    = times[c(F, T)],
+  text   = text,
+  stringsAsFactors = FALSE
+)
+```
+

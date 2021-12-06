@@ -182,18 +182,25 @@ TokenStream <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #' Read n named values from the given position
     #'
+    #' Returns values but does not advance stream position
+    #'
     #' @param n number of values to read
     #' @param offset offset from given position
     #'
     #' @return named values at this position
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     read = function(n, offset = 0) {
+      if (n < 1) {
+        return(NULL)
+      }
       self$assert_within_range(self$position + offset, n)
       self$named_values[self$position + seq(0, n-1) + offset]
     },
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #' Read n names from the given position
+    #'
+    #' Returns values but does not advance stream position
     #'
     #' @param n number of values to read
     #' @param offset offset from given position
@@ -207,6 +214,8 @@ TokenStream <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #' Read n values from the given position
     #'
+    #' Returns values but does not advance stream position
+    #'
     #' @param n number of values to read
     #' @param offset offset from given position
     #'
@@ -218,6 +227,8 @@ TokenStream <- R6::R6Class(
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #' Consume n tokens from the given position i.e. read and advance the stream
+    #'
+    #' Returns values and advances stream position.
     #'
     #' @param n number of values to read
     #'
@@ -238,7 +249,9 @@ TokenStream <- R6::R6Class(
     },
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    #' Consume tokens while some expression matches
+    #' Read tokens while some expression matches
+    #'
+    #' Returns values but does not advance stream position
     #'
     #' @param name,value the boundary of the consumption. if both name and
     #'        value are specified, then \code{combine} indicates how to logically
@@ -250,11 +263,20 @@ TokenStream <- R6::R6Class(
         stop("Must define either name or value")
       }
 
-      name  <-  name %||% "..ooOOoo.."
-      value <- value %||% "..ooOOoo.."
+      stopifnot(!self$end_of_stream())
 
-      nidx <- names(self$named_values)  %in%  name
-      vidx <-       self$named_values   %in% value
+      search_idx <- seq(self$position, length(self$named_values))
+      if (is.null(name)) {
+        nidx <- FALSE
+      } else {
+        nidx <- names(self$named_values[search_idx])  %in%  name
+      }
+
+      if (is.null(value)) {
+        vidx <- FALSE
+      } else {
+        vidx <- self$named_values[search_idx]   %in% value
+      }
 
       idx <- switch (
         combine,
@@ -263,14 +285,13 @@ TokenStream <- R6::R6Class(
         stop("No such 'combine' method: ", combine)
       )
 
-      idx <- which(!idx) - 1L
-      idx <- idx[idx >= self$position][1L]
-
-
-      if (length(idx) == 0L || is.na(idx)) {
-        n <- length(self$named_values) - self$position + 1L
+      if (!isTRUE(idx[1])) {
+        # first value doesn't match which means there's no values to read!
+        # Call self$read(0) so that the return value is always consistent
+        n <- 0L
       } else {
-        n <- idx - self$position + 1L
+        # What is the lengh of the initial run of "TRUE" values?
+        n <- rle(idx)$lengths[1]
       }
 
       self$read(n)
@@ -278,6 +299,8 @@ TokenStream <- R6::R6Class(
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #' Consume tokens while some expression matches
+    #'
+    #' Returns values and advances stream position.
     #'
     #' @param name,value the boundary of the consumption. if both name and
     #'        value are specified, then \code{combine} indicates how to logically
@@ -294,6 +317,8 @@ TokenStream <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #' Read until some expression matches
     #'
+    #' Returns values but does not advance stream position
+    #'
     #' @param name,value the boundary of the consumption. if both name and
     #'        value are specified, then \code{combine} indicates how to logically
     #'        define the combination
@@ -308,11 +333,18 @@ TokenStream <- R6::R6Class(
         stop("Must define either name or value")
       }
 
-      name  <-  name %||% "..ooOOoo.."
-      value <- value %||% "..ooOOoo.."
+      search_idx <- seq(self$position, length(self$named_values))
+      if (is.null(name)) {
+        nidx <- FALSE
+      } else {
+        nidx <- names(self$named_values[search_idx])  %in%  name
+      }
 
-      nidx <- names(self$named_values)  %in%  name
-      vidx <-       self$named_values   %in% value
+      if (is.null(value)) {
+        vidx <- FALSE
+      } else {
+        vidx <- self$named_values[search_idx]   %in% value
+      }
 
       idx <- switch (
         combine,
@@ -321,21 +353,23 @@ TokenStream <- R6::R6Class(
         stop("No such 'combine' method: ", combine)
       )
 
-      idx <- which(idx)
-      idx <- idx[idx >= self$position]
-      idx <- idx[1L]
-
-      if (!inclusive) {
-        idx <- idx - 1L
-        if (length(idx) > 0 && !is.na(idx) && idx == self$position - 1L) return(character(0))
-      }
-
-      if (length(idx) == 0L || is.na(idx)) {
-        # message("End not found. Returning all")
-        n <- length(self$named_values) - self$position + 1L
+      if (isTRUE(idx[1])) {
+        # First item matches!
+        if (inclusive) {
+          n <- 1L
+        } else {
+          n <- 0L
+        }
+      } else if (!any(idx)) {
+        # No match found. Read until end
+        n <- length(idx)
       } else {
-        n <- idx - self$position + 1L
+        n <- rle(idx)$length[1]
+        if (inclusive) {
+          n <- n + 1L
+        }
       }
+
 
       self$read(n)
     },
@@ -343,6 +377,8 @@ TokenStream <- R6::R6Class(
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #' Consume until some expression matches
+    #'
+    #' Returns values and advances stream position.
     #'
     #' @param name,value the boundary of the consumption. if both name and
     #'        value are specified, then \code{combine} indicates how to logically

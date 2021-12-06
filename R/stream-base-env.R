@@ -180,6 +180,9 @@ create_stream <- function(named_values) {
   # @return named values at this position
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   stream$read = function(n, offset = 0) {
+    if (n < 1) {
+      return(NULL)
+    }
     stream$assert_within_range(stream$position + offset, n)
     stream$named_values[stream$position + seq(0, n-1) + offset]
   }
@@ -242,11 +245,18 @@ create_stream <- function(named_values) {
       stop("Must define either name or value")
     }
 
-    name  <-  name %||% "..ooOOoo.."
-    value <- value %||% "..ooOOoo.."
+    search_idx <- seq(stream$position, length(stream$named_values))
+    if (is.null(name)) {
+      nidx <- FALSE
+    } else {
+      nidx <- names(stream$named_values[search_idx])  %in%  name
+    }
 
-    nidx <- names(stream$named_values)  %in%  name
-    vidx <-       stream$named_values   %in% value
+    if (is.null(value)) {
+      vidx <- FALSE
+    } else {
+      vidx <- stream$named_values[search_idx]   %in% value
+    }
 
     idx <- switch (
       combine,
@@ -255,14 +265,12 @@ create_stream <- function(named_values) {
       stop("No such 'combine' method: ", combine)
     )
 
-    idx <- which(!idx) - 1L
-    idx <- idx[idx >= stream$position][1L]
-
-
-    if (length(idx) == 0L || is.na(idx)) {
-      n <- length(stream$named_values) - stream$position + 1L
+    if (!isTRUE(idx[1])) {
+      # first value doesn't match which means there's no values to read!
+      n <- 0L
     } else {
-      n <- idx - stream$position + 1L
+      # What is the lengh of the initial run of "TRUE" values?
+      n <- rle(idx)$lengths[1]
     }
 
     stream$read(n)
@@ -300,11 +308,18 @@ create_stream <- function(named_values) {
       stop("Must define either name or value")
     }
 
-    name  <-  name %||% "..ooOOoo.."
-    value <- value %||% "..ooOOoo.."
+    search_idx <- seq(stream$position, length(stream$named_values))
+    if (is.null(name)) {
+      nidx <- FALSE
+    } else {
+      nidx <- names(stream$named_values[search_idx])  %in%  name
+    }
 
-    nidx <- names(stream$named_values)  %in%  name
-    vidx <-       stream$named_values   %in% value
+    if (is.null(value)) {
+      vidx <- FALSE
+    } else {
+      vidx <- stream$named_values[search_idx]   %in% value
+    }
 
     idx <- switch (
       combine,
@@ -313,21 +328,23 @@ create_stream <- function(named_values) {
       stop("No such 'combine' method: ", combine)
     )
 
-    idx <- which(idx)
-    idx <- idx[idx >= stream$position]
-    idx <- idx[1L]
-
-    if (!inclusive) {
-      idx <- idx - 1L
-      if (length(idx) > 0 && !is.na(idx) && idx == stream$position - 1L) return(character(0))
-    }
-
-    if (length(idx) == 0L || is.na(idx)) {
-      # message("End not found. Returning all")
-      n <- length(stream$named_values) - stream$position + 1L
+    if (isTRUE(idx[1])) {
+      # First item matches!
+      if (inclusive) {
+        n <- 1L
+      } else {
+        n <- 0L
+      }
+    } else if (!any(idx)) {
+      # No match found. Read until end
+      n <- length(idx)
     } else {
-      n <- idx - stream$position + 1L
+      n <- rle(idx)$length[1]
+      if (inclusive) {
+        n <- n + 1L
+      }
     }
+
 
     stream$read(n)
   }

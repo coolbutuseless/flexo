@@ -267,7 +267,9 @@ Advance the stream}
 \describe{
 \item{\code{n}}{number of tokens by which to advance the stream. May be
        negative. New position must be within range of the data
-Read n named values from the given position}
+Read n named values from the given position
+
+Returns values but does not advance stream position}
 }
 \if{html}{\out{</div>}}
 }
@@ -292,6 +294,8 @@ Read n named values from the given position}
 \subsection{Returns}{
 named values at this position
 Read n names from the given position
+
+Returns values but does not advance stream position
 }
 }
 \if{html}{\out{<hr>}}
@@ -314,6 +318,8 @@ Read n names from the given position
 \subsection{Returns}{
 names at this position
 Read n values from the given position
+
+Returns values but does not advance stream position
 }
 }
 \if{html}{\out{<hr>}}
@@ -336,6 +342,8 @@ Read n values from the given position
 \subsection{Returns}{
 values at this position
 Consume n tokens from the given position i.e. read and advance the stream
+
+Returns values and advances stream position.
 }
 }
 \if{html}{\out{<hr>}}
@@ -362,7 +370,9 @@ values starting at this position
 \if{latex}{\out{\hypertarget{method-end_of_stream}{}}}
 \subsection{Method \code{end_of_stream()}}{
 has end of stream been reached?
-Consume tokens while some expression matches
+Read tokens while some expression matches
+
+Returns values but does not advance stream position
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TokenStream$end_of_stream()}\if{html}{\out{</div>}}
 }
@@ -384,7 +394,9 @@ value are specified, then \code{combine} indicates how to logically
 define the combination}
 
 \item{\code{combine}}{logical operator value values: and, or
-Consume tokens while some expression matches}
+Consume tokens while some expression matches
+
+Returns values and advances stream position.}
 }
 \if{html}{\out{</div>}}
 }
@@ -405,7 +417,9 @@ value are specified, then \code{combine} indicates how to logically
 define the combination}
 
 \item{\code{combine}}{logical operator value values: and, or
-Read until some expression matches}
+Read until some expression matches
+
+Returns values but does not advance stream position}
 }
 \if{html}{\out{</div>}}
 }
@@ -435,7 +449,9 @@ define the combination}
 \item{\code{inclusive}}{should the end-point be included in the returned results?
        Default: TRUE.  If FALSE, then the end-point is not returned, and
        the stream position is set to *before* this end-point
-Consume until some expression matches}
+Consume until some expression matches
+
+Returns values and advances stream position.}
 }
 \if{html}{\out{</div>}}
 }
