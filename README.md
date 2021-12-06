@@ -6,9 +6,8 @@
 <!-- badges: start -->
 
 ![](https://img.shields.io/badge/cool-useless-green.svg)
-![](https://img.shields.io/badge/test%20coverage-100%25-blue.svg) [![R
-build
-status](https://github.com/coolbutuseless/flexo/workflows/R-CMD-check/badge.svg)](https://github.com/coolbutuseless/flexo/actions)
+![](https://img.shields.io/badge/test%20coverage-100%25-blue.svg)
+[![R-CMD-check](https://github.com/coolbutuseless/flexo/workflows/R-CMD-check/badge.svg)](https://github.com/coolbutuseless/flexo/actions)
 <!-- badges: end -->
 
 `flexo` provides tools for simple tokenising/lexing/parsing of text
