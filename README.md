@@ -75,6 +75,8 @@ Vignettes are available to read
     format](https://coolbutuseless.github.io/package/flexo/articles/PBRT.html)
 -   [Parsing SRT subtitle
     format](https://coolbutuseless.github.io/package/flexo/articles/srt.html)
+-   [Parsing and Evaluating LISP-y
+    S-Expressions](https://coolbutuseless.github.io/package/flexo/articles/sexp.html)
 
 ## Example: Using `lex()` to split sentence into tokens
 

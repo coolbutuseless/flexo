@@ -1,0 +1,159 @@
+---
+title: "S-expressions (something LISPy)"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{S-expressions (something LISPy)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(flexo)
+```
+
+
+# LISPy S-Expression
+
+The following code is an S-Expression which evaluates to `21`
+
+```{r}
+sexp <- "(+ (* 2 3) (* 3 5))"
+```
+
+
+
+# Lex the S-Expression into tokens
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Define the regex for each token
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sexp_regexes <- c(
+  open       = "\\(",
+  close      = "\\)",
+  num        = "\\d+",
+  whitespace = "\\s+",
+  op         = ".+?"
+)
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Split the expression into tokens
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tokens <- lex(sexp, sexp_regexes)
+tokens <- tokens[names(tokens) != 'whitespace']
+
+tokens
+```
+
+
+# Evaluate the expression by interpreting the tokens
+
+Recurisve evaulation of the S-Expression by calculating on the stream of tokens.
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Initialise a token stream
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+stream <- TokenStream$new(tokens)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Recursive function to evaluate a TokenStream full of sexp tokens
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+eval_sexp <- function(stream) {
+  name  <- stream$read_names(1)
+  
+  if (name == 'op') {
+    
+    # Get the 'op'
+    op <- stream$consume(1)
+    
+    # Gather the args
+    args <- list()
+    while (stream$read_names(1) != 'close') {
+      this_arg <- eval_sexp(stream)
+      args     <- c(args, this_arg)
+    }
+    stream$consume(1)           # Consume the "close" bracket
+    result <- do.call(op, args) # Eval the "op"
+  } else if (name == "open") {
+    stream$consume(1)           # Consume the "open" bracket
+    result <- eval_sexp(stream) # Recursive eval
+  } else if (name == 'num') {
+    result <- as.numeric( stream$consume(1) ) 
+  } 
+  
+  result
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Calculate the result
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+eval_sexp(stream)
+```
+
+
+
+
+
+# Evaluate the expression by translating to R
+
+Translate the S-Expression into a string of R code and then evaluate it.
+
+
+```{r}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Initialise a token stream
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+stream <- TokenStream$new(tokens)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Evaluate a TokenStream full of sexp tokens
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+convert_sexp <- function(stream) {
+  name  <- stream$read_names(1)
+  
+  if (name == 'op') {
+    
+    # Get the 'op'
+    op <- stream$consume(1)
+    
+    # Gather the args
+    args <- list()
+    while (stream$read_names(1) != 'close') {
+      this_arg <- convert_sexp(stream)
+      args     <- c(args, this_arg)
+    }
+    stream$consume(1)           # Consume the "close" bracket
+    
+    # Create some R code
+    result <- paste0("`", op, "`(", paste(args, collapse = ", "), ")")
+  } else if (name == "open") {
+    stream$consume(1)           # Consume the "open" bracket
+    result <- convert_sexp(stream) # Recursive eval
+  } else if (name == 'num') {
+    result <- as.numeric( stream$consume(1) ) 
+  } 
+  
+  result
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Calculate the result
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+r_string <- convert_sexp(stream)
+r_string
+
+eval(parse(text = r_string))
+```
+
+
+
+
